@@ -7,19 +7,6 @@
 /*                                                                         */
 /***************************************************************************/
 
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <string.h>
-// #include <fstream>
-// #include <format>
-// #include <string_view>
-
-// #include "Parser.h"
-// #include "Printer.h"
-// #include "Absyn.h"
-// #include "CodeGenerator.cpp"
-// #include "JasminGenerator.cpp"
-// #include "LLVMGenerator.cpp"
 #include "Includes.h"
 
 void usage(void) {
@@ -67,32 +54,13 @@ int main(int argc, char ** argv)
   
   parse_tree = pProgram(input);
   std::set<std::string> variables = collect_variables(parse_tree);
-  size_t locals = variables.size();
 
   Data data;
   DataLLVM data_llvm;
 
   data.var_to_slots = create_map(variables);
   data_llvm.m_var_to_slots = data.var_to_slots;
-  
-  std::string generated_code = generate_code_jasmin(parse_tree,data);
-  std::string start = R"abc(
-.class public Main
-.super java/lang/Object
 
-.method public <init>()V
-    aload_0
-    invokenonvirtual java/lang/Object/<init>()V
-    return
-.end method
-  
-.method public static main([Ljava/lang/String;)V
-.limit stack )abc";
-
-  start+= std::to_string(data.max_stack_size)+"\n";
-  start+=".limit locals "+std::to_string(locals+1)+"\n";
-  std::string end = "return\n.end method";
-  std::string jasmin_code = start + generated_code +end;
   generate_code_llvm(parse_tree,data_llvm);
 
   constexpr const char * start_llvm = R"abc(
@@ -136,10 +104,6 @@ attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protect
   entire_llvm+="\n"+llvm_code;
   entire_llvm+=end_llvm;
 
-  std::ofstream myfile;
-  myfile.open ("GeneratedFiles/generated_jasmin.j");
-  myfile << jasmin_code;
-  myfile.close();
 
   std::ofstream myfile_llvm;
   myfile_llvm.open ("GeneratedFiles/generated_llvm.ll");

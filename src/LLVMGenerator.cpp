@@ -1,29 +1,29 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <iostream>
 
-#include "Parser.h"
-#include "Printer.h"
-#include "Absyn.h"
-#include <string>
-#include <set>
-#include <vector>
-#include <map>
-#include <format>
+// #include "Parser.h"
+// #include "Printer.h"
+// #include "Absyn.h"
+// #include <string>
+// #include <set>
+// #include <vector>
+// #include <list>
+// #include <map>
+// #include <format>
+#include "Includes.h"
 
-int stack_level= 0;
-class DataLLVM{
-private:
-public:
-
-    std::map<Exp,int> m_nodes_to_id;
-    std::map<std::string,int> m_var_to_slots; 
-    size_t stack_size=0;
-    size_t max_stack_size=0;
-    int m_node_current_index=1;
-    std::vector<std::string> m_lines;
-    void increase(){ m_node_current_index++;}
-};
+// class DataLLVM{
+// private:
+// public:
+//     std::map<Exp,int> m_nodes_to_id;
+//     std::map<std::string,int> m_var_to_slots; 
+//     size_t stack_size=0;
+//     size_t max_stack_size=0;
+//     int m_node_current_index=1;
+//     std::vector<std::string> m_lines;
+//     void increase(){ m_node_current_index++;}
+// };
 
 std::string get_child_index(Exp node,DataLLVM &data){
     if(data.m_nodes_to_id.count(node)==1)
@@ -33,69 +33,118 @@ std::string get_child_index(Exp node,DataLLVM &data){
 }
 
 void rec_post_order_llvm(Exp node,DataLLVM &data){
+    class StackEntry{
+    public:
+        Exp m_node;
+        StackEntry(Exp node):m_node{node}{}
+        bool are_children_processed=false;
+    };
+
     std::string code;
-    stack_level++;
-    switch(node->kind){
-        case Exp_::is_ExpAdd:{
-            rec_post_order_llvm(node->u.expadd_.exp_1,data);
-            rec_post_order_llvm(node->u.expadd_.exp_2,data);
-            std::string op_1 = get_child_index(node->u.expadd_.exp_1,data);
-            std::string op_2 = get_child_index(node->u.expadd_.exp_2,data);
-            code = std::format("%{} = add nsw i32 {}, {}",data.m_node_current_index,op_1,op_2);
-            data.m_nodes_to_id[node]=data.m_node_current_index;
-            data.m_lines.push_back(code);
-            data.increase();
-            break;
+    std::list<StackEntry> stack;
+    
+    stack.push_back(node);
+    while(!stack.empty()){
+        StackEntry &current_entry = stack.back();
+
+        switch(current_entry.m_node->kind){
+            case Exp_::is_ExpAdd:{
+                if(!current_entry.are_children_processed){
+                    current_entry.are_children_processed=true;
+                    stack.push_back(current_entry.m_node->u.expadd_.exp_2);
+                    stack.push_back(current_entry.m_node->u.expadd_.exp_1);
+                    break;
+                }else{
+                    Exp right_child = current_entry.m_node->u.expadd_.exp_2;
+                    Exp left_child = current_entry.m_node->u.expadd_.exp_1;
+
+                    std::string op_1 = get_child_index(left_child,data);
+                    std::string op_2 = get_child_index(right_child,data);
+                    code = std::format("%{} = add nsw i32 {}, {}",data.m_node_current_index,op_1,op_2);
+                    data.m_nodes_to_id[current_entry.m_node]=data.m_node_current_index;
+                    data.m_lines.push_back(code);
+                    data.increase();
+                    stack.pop_back();
+                    break;
+                }
+            }
+            case Exp_::is_ExpDiv:{
+                if(!current_entry.are_children_processed){
+                    current_entry.are_children_processed=true;
+                    stack.push_back(current_entry.m_node->u.expdiv_.exp_2);
+                    stack.push_back(current_entry.m_node->u.expdiv_.exp_1);
+                    break;
+                }else{
+                    Exp left_child = current_entry.m_node->u.expdiv_.exp_1;
+                    Exp right_child = current_entry.m_node->u.expdiv_.exp_2;
+
+                    std::string op_1 = get_child_index(left_child,data);
+                    std::string op_2 = get_child_index(right_child,data);
+                    code = std::format("%{} = sdiv i32 {}, {}",data.m_node_current_index,op_1,op_2);
+                    data.m_nodes_to_id[current_entry.m_node]=data.m_node_current_index;
+                    data.m_lines.push_back(code);
+                    data.increase();   
+                    stack.pop_back();
+                    break;
+                }
+            }
+            case Exp_::is_ExpMul:{
+                if(!current_entry.are_children_processed){
+                    current_entry.are_children_processed=true;
+                    stack.push_back(current_entry.m_node->u.expmul_.exp_2);
+                    stack.push_back(current_entry.m_node->u.expmul_.exp_1);
+                    break;
+                }else{
+                    Exp left_child = current_entry.m_node->u.expmul_.exp_1;
+                    Exp right_child = current_entry.m_node->u.expmul_.exp_2;
+
+                    std::string op_1 = get_child_index(left_child,data);
+                    std::string op_2 = get_child_index(right_child,data);
+                    code = std::format("%{} = mul nsw i32 {}, {}",data.m_node_current_index,op_1,op_2);
+                    data.m_nodes_to_id[current_entry.m_node]=data.m_node_current_index;
+                    data.m_lines.push_back(code);
+                    data.increase();   
+                    stack.pop_back();
+                    break;
+                }
+            }
+            case Exp_::is_ExpSub:{
+                 if(!current_entry.are_children_processed){
+                    current_entry.are_children_processed=true;
+                    stack.push_back(current_entry.m_node->u.expsub_.exp_2);
+                    stack.push_back(current_entry.m_node->u.expsub_.exp_1);
+                    break;
+                }else{
+                    Exp left_child = current_entry.m_node->u.expsub_.exp_1;
+                    Exp right_child = current_entry.m_node->u.expsub_.exp_2;
+
+                    std::string op_1 = get_child_index(left_child,data);
+                    std::string op_2 = get_child_index(right_child,data);
+                    code = std::format("%{} = sub nsw i32 {}, {}",data.m_node_current_index,op_1,op_2);
+                    data.m_nodes_to_id[current_entry.m_node]=data.m_node_current_index;
+                    data.m_lines.push_back(code);
+                    data.increase();   
+                    stack.pop_back();
+                    break;
+                }
+            }
+            case Exp_::is_ExpLit:{
+                stack.pop_back();
+                break;
+            }
+            case Exp_::is_ExpVar:{
+                code = std::format("%{} = load i32, ptr %{}, align 4",data.m_node_current_index,data.m_var_to_slots.at(current_entry.m_node->u.expvar_.ident_));
+                data.m_nodes_to_id[current_entry.m_node]=data.m_node_current_index;
+                data.m_lines.push_back(code);
+                data.increase();
+                stack.pop_back();
+                break;
+            }
+            default:
+                std::cout<<"error"<<std::endl;
+                break;
         }
-        case Exp_::is_ExpDiv:{
-            rec_post_order_llvm(node->u.expadd_.exp_1,data);
-            rec_post_order_llvm(node->u.expadd_.exp_2,data);
-            std::string op_1 = get_child_index(node->u.expadd_.exp_1,data);
-            std::string op_2 = get_child_index(node->u.expadd_.exp_2,data);
-            code = std::format("%{} = sdiv i32 {}, {}",data.m_node_current_index,op_1,op_2);
-            data.m_nodes_to_id[node]=data.m_node_current_index;
-            data.m_lines.push_back(code);
-            data.increase();
-            break;
-        }
-        case Exp_::is_ExpMul:{
-            rec_post_order_llvm(node->u.expadd_.exp_1,data);
-            rec_post_order_llvm(node->u.expadd_.exp_2,data);
-            std::string op_1 = get_child_index(node->u.expadd_.exp_1,data);
-            std::string op_2 = get_child_index(node->u.expadd_.exp_2,data);
-            code = std::format("%{} = mul nsw i32 {}, {}",data.m_node_current_index,op_1,op_2);
-            data.m_nodes_to_id[node]=data.m_node_current_index;
-            data.m_lines.push_back(code);
-            data.increase();
-            break;
-        }
-        case Exp_::is_ExpSub:{
-            rec_post_order_llvm(node->u.expadd_.exp_1,data);
-            rec_post_order_llvm(node->u.expadd_.exp_2,data);
-            std::string op_1 = get_child_index(node->u.expadd_.exp_1,data);
-            std::string op_2 = get_child_index(node->u.expadd_.exp_2,data);
-            code = std::format("%{} = sub nsw i32 {}, {}",data.m_node_current_index,op_1,op_2);
-            data.m_nodes_to_id[node]=data.m_node_current_index;
-            data.m_lines.push_back(code);
-            data.increase();
-            break;
-        }
-        case Exp_::is_ExpLit:{
-            
-            break;
-        }
-        case Exp_::is_ExpVar:{
-            code = std::format("%{} = load i32, ptr %{}, align 4",data.m_node_current_index,data.m_var_to_slots.at(node->u.expvar_.ident_));
-            data.m_nodes_to_id[node]=data.m_node_current_index;
-            data.m_lines.push_back(code);
-            data.increase();
-            break;
-        }
-        default:
-            std::cout<<"Blad"<<std::endl;
-            break;
     }
-    stack_level--;
 }
 
 void test_tagging_tree(Exp node,DataLLVM &data2){

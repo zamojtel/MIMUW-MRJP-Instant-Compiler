@@ -7,19 +7,6 @@
 /*                                                                         */
 /***************************************************************************/
 
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <string.h>
-// #include <fstream>
-// #include <format>
-// #include <string_view>
-
-// #include "Parser.h"
-// #include "Printer.h"
-// #include "Absyn.h"
-// #include "CodeGenerator.cpp"
-// #include "JasminGenerator.cpp"
-// #include "LLVMGenerator.cpp"
 #include "Includes.h"
 
 void usage(void) {
@@ -70,10 +57,7 @@ int main(int argc, char ** argv)
   size_t locals = variables.size();
 
   Data data;
-  DataLLVM data_llvm;
-
   data.var_to_slots = create_map(variables);
-  data_llvm.m_var_to_slots = data.var_to_slots;
   
   std::string generated_code = generate_code_jasmin(parse_tree,data);
   std::string start = R"abc(
@@ -93,59 +77,12 @@ int main(int argc, char ** argv)
   start+=".limit locals "+std::to_string(locals+1)+"\n";
   std::string end = "return\n.end method";
   std::string jasmin_code = start + generated_code +end;
-  generate_code_llvm(parse_tree,data_llvm);
-
-  constexpr const char * start_llvm = R"abc(
-; ModuleID = 'Instant'
-source_filename = "Instant"
-target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-pc-linux-gnu"
-
-module asm ".globl _ZSt21ios_base_library_initv"
-
-@.str = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
-
-; Function Attrs: mustprogress noinline norecurse optnone uwtable
-define dso_local noundef i32 @main() #0 {{)abc";
-  
-  std::string end_llvm= R"abc(
-    ret i32 0
-}
-
-declare i32 @printf(ptr noundef, ...) #1
-
-attributes #0 = { mustprogress noinline norecurse optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-
-!llvm.module.flags = !{!0, !1, !2, !3, !4}
-!llvm.ident = !{!5}
-
-!0 = !{i32 1, !"wchar_size", i32 4}
-!1 = !{i32 8, !"PIC Level", i32 2}
-!2 = !{i32 7, !"PIE Level", i32 2}
-!3 = !{i32 7, !"uwtable", i32 2}
-!4 = !{i32 7, !"frame-pointer", i32 2}
-!5 = !{!"Ubuntu clang version 18.1.3 (1ubuntu1)"}
-  )abc";
-
-  std::string llvm_code;
-  for(size_t i=0;i<data_llvm.m_lines.size();i++)
-    llvm_code+=data_llvm.m_lines[i]+"\n";
-
-  std::string entire_llvm = dyna_print(start_llvm);
-  entire_llvm+="\n"+llvm_code;
-  entire_llvm+=end_llvm;
 
   std::ofstream myfile;
   myfile.open ("GeneratedFiles/generated_jasmin.j");
   myfile << jasmin_code;
   myfile.close();
 
-  std::ofstream myfile_llvm;
-  myfile_llvm.open ("GeneratedFiles/generated_llvm.ll");
-  myfile_llvm << entire_llvm;
-  myfile_llvm.close();
-  
   if (parse_tree)
   {
     if (!quiet) {
@@ -160,4 +97,3 @@ attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protect
 
   return 1;
 }
-

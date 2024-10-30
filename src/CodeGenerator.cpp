@@ -103,8 +103,7 @@ std::string generate_code(Program parse_tree){
                 // throwing an error, error in this case is an empty string
                 return "";
             }
-
-            // current->stmt_->u.sass_.ident_; // this is the name of the variable
+            
             std::string value=rec_post_order(current->stmt_->u.sass_.exp_);
             if(def_variables.count(current->stmt_->u.sass_.ident_)==1){
                 std::string code = std::string(current->stmt_->u.sass_.ident_)+" = "+value+";";
@@ -115,7 +114,7 @@ std::string generate_code(Program parse_tree){
                 std::string id = std::string(current->stmt_->u.sass_.ident_);
                 def_variables.insert(id);
                 std::string code = "int "+std::string(id)+" = "+value+";";
-                std::cout<<code<<std::endl;
+                // std::cout<<code<<std::endl;
                 lines.push_back(code);
             }
             break;

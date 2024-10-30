@@ -9,17 +9,26 @@ FLEX_OPTS = -Pinstant_
 BISON = bison
 BISON_OPTS = -t -pinstant_
 
-OBJS = Absyn.o Buffer.o Lexer.o Parser.o Printer.o
-OBJS_FILES = build/Absyn.o  build/Buffer.o build/Lexer.o build/Parser.o build/Printer.o
+OBJS = Absyn.o Buffer.o Lexer.o Parser.o Printer.o LLVMGenerator.o JasminGenerator.o InscJVM.o 
+OBJS_FILES = build/Absyn.o  build/Buffer.o build/Lexer.o build/Parser.o build/Printer.o build/LLVMGenerator.o build/JasminGenerator.o
 .PHONY : clean distclean
 
-all : TestInstant
+# all : TestInstant
+# all : InscJVM InscLLVM
+all: InscLLVM InscJVM
 
 clean :
 	rm -f build/*.o src/TestInstant src/Instant.aux src/Instant.log src/Instant.pdf src/Instant.dvi src/Instant.ps src/Instant
 
 distclean : clean
 	rm -f Absyn.h Absyn.c Bison.h Buffer.h Buffer.c Instant.l Lexer.c Instant.y Parser.h Parser.c Printer.c Printer.h Skeleton.c Skeleton.h Test.c Makefile Instant.tex
+
+InscJVM: ${OBJS} InscJVM.o
+	@echo "Linking TestInstant..."
+	${CC} ${CCFLAGS} ${OBJS_FILES} build/InscJVM.o -o build/insc_jvm
+
+InscLLVM: ${OBJS} InscLLVM.o
+	${CC} ${CCFLAGS} ${OBJS_FILES} build/InscLLVM.o -o build/insc_llvm
 
 TestInstant : ${OBJS} Test.o
 	@echo "Linking TestInstant..."
@@ -48,5 +57,17 @@ Parser.o : src/Parser.c src/Absyn.h src/Bison.h
 Printer.o : src/Printer.c src/Printer.h src/Absyn.h
 	${CC} ${CCFLAGS} -c src/Printer.c -o build/Printer.o
 
+LLVMGenerator.o : src/LLVMGenerator.cpp src/LLVMGenerator.h
+	${CC} ${CCFLAGS} -c src/LLVMGenerator.cpp -o build/LLVMGenerator.o
+
+JasminGenerator.o : src/JasminGenerator.cpp src/JasminGenerator.h
+	${CC} ${CCFLAGS} -c src/JasminGenerator.cpp -o build/JasminGenerator.o
+
 Test.o : src/Test.cpp src/Parser.h src/Printer.h src/Absyn.h
 	${CC} ${CCFLAGS} -c src/Test.cpp -o build/Test.o
+
+InscLLVM.o : src/InscLLVM.cpp src/Parser.h src/Printer.h src/Absyn.h
+	${CC} ${CCFLAGS} -c src/InscLLVM.cpp -o build/InscLLVM.o
+
+InscJVM.o : src/InscJVM.cpp src/Parser.h src/Printer.h src/Absyn.h
+	${CC} ${CCFLAGS} -c src/InscJVM.cpp -o build/InscJVM.o
