@@ -17,5 +17,10 @@
 #include <format>
 #include "JasminGenerator.h"
 #include "LLVMGenerator.h"
+#include <cstdio>
+#include <cstdlib>
+#include <unistd.h>
+#include <stdlib.h>
+#include <filesystem>
 
 #endif

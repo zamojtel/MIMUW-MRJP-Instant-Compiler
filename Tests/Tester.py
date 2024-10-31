@@ -3,8 +3,6 @@
 import os
 from typing import List
 
-# class Tester:
-
 def compare_results(input_files : List[str],output_dir : str,expected_output_dir : str):
     cwd = os.getcwd()
 
@@ -18,7 +16,7 @@ def compare_results(input_files : List[str],output_dir : str,expected_output_dir
         f2 = open(path, "r")
         expected_output = f2.read()
         expected_output = expected_output
-        print(output,end=" ")
+        # print(output,end=" ")
         if output == expected_output:
             print(f'Test: {output_file_name} passed !!!')
         else:
@@ -32,26 +30,26 @@ def Test_JVM(input_files : List[str],input_dir : str,output_dir : str,excpected_
     cwd = os.getcwd()
     jasmin_jar = cwd + '/lib/jasmin.jar'
     executable = cwd + '/build/insc_jvm'
-
-    generated_jasmin = cwd + '/GeneratedFiles/generated_jasmin.j'
+    
     execute_java = 'java -jar '+jasmin_jar
-    run_java_main = 'java Main'
     
     for input_file_name in input_file_names:
         test = input_dir+'/'+input_file_name+'.ins'
-        # print(test)
-        # print()
-        generate_files_cmd = executable + ' < ' +test
-        # print(generate_files_cmd)
+        generated_jasmin = cwd + f'/{input_dir}/{input_file_name}.j'
+        run_java_main = f'java {input_file_name}'
+        print(test)
+        print()
+        generate_files_cmd = executable + ' ' +test
+        print(generate_files_cmd)
         os.system(generate_files_cmd)
 
         # jasmin code generation
         run_java =  execute_java +' '+generated_jasmin
-        # print(run_java)
+        print(run_java)
         os.system(run_java)
         output_test = f"{output_dir}/{input_file_name}.output"
         command = run_java_main+' > '+output_test
-        # print(command)
+        print(command)
         os.system(command)
     
     compare_results(input_files,output_dir,excpected_output_dir)
@@ -82,13 +80,13 @@ def Test_LLVM(input_files : List[str],input_dir : str,output_dir : str,expected_
     
 
 if __name__ == '__main__':
-    input_file_names = os.listdir('/home/bartlomiej-zamojtel/Desktop/ZadaniaMRJP/Instant_Compiler/MIMUW-MRJP-Instant-Compiler/Tests/NewTestInputs')
-    input_file_names.sort()
-    print(input_file_names)
-    
-    for j in range(len(input_file_names)):
-        input_file_names[j] = input_file_names[j][:-4]
-    # input_file_names = ['associativity_division']
+    all_files = os.listdir('/home/bartlomiej-zamojtel/Desktop/ZadaniaMRJP/Instant_Compiler/MIMUW-MRJP-Instant-Compiler/Tests/NewTestInputs')
+    all_files.sort()
+    print(all_files)
+    input_file_names = []
+    for j in range(len(all_files)):
+        if all_files[j][-3:]=='ins':
+            input_file_names.append(all_files[j][:-4])
 
     cwd = os.getcwd()
     input_dir = f'{cwd}/Tests/NewTestInputs'
@@ -99,9 +97,9 @@ if __name__ == '__main__':
     print("Printing results for jvm")
     print()
     Test_JVM(input_file_names,input_dir,output_dir,expected_output_dir)
-    print("Printing results for llvm")
-    print()
-    Test_LLVM(input_file_names,input_dir,output_dir,expected_output_dir)
+    # print("Printing results for llvm")
+    # print()
+    # Test_LLVM(input_file_names,input_dir,output_dir,expected_output_dir)
     
 
 
