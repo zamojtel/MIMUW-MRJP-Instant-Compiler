@@ -100,7 +100,6 @@ std::string generate_code(Program parse_tree){
             check_undefined_variables(current->stmt_->u.sass_.exp_,def_variables,undef_variables);
             if(!undef_variables.empty()){
                 print_undef_vars(undef_variables);
-                // throwing an error, error in this case is an empty string
                 return "";
             }
             
@@ -114,7 +113,6 @@ std::string generate_code(Program parse_tree){
                 std::string id = std::string(current->stmt_->u.sass_.ident_);
                 def_variables.insert(id);
                 std::string code = "int "+std::string(id)+" = "+value+";";
-                // std::cout<<code<<std::endl;
                 lines.push_back(code);
             }
             break;

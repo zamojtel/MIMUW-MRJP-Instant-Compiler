@@ -1,42 +1,14 @@
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <iostream>
-
-// #include "Parser.h"
-// #include "Printer.h"
-// #include "Absyn.h"
-// #include <string>
-// #include <set>
-// #include <list>
-// #include <vector>
-// #include <map>
 #include "Includes.h"
-
-// class Data{
-// private:
-// public:
-//     std::map<std::string,int> var_to_slots;
-//     size_t stack_size=0;
-//     size_t max_stack_size=0;
-//     void pushed(){
-//         stack_size++;
-//         if(stack_size>max_stack_size)
-//             max_stack_size=stack_size;
-//     }
-
-//     void popped(){
-//         stack_size--;
-//     }
-// };
 
 std::set<std::string> collect_variables(Program parse_tree){
     std::set<std::string> variables;
     ListStmt current = parse_tree->u.prog_.liststmt_;
-    
+
     for(;current;current=current->liststmt_){
-        if(current->stmt_->kind==Stmt_::is_SAss && current->stmt_->is_SAss==Stmt_::is_SAss){
+        if(current->stmt_->kind==Stmt_::is_SAss){
             if(current->stmt_->u.sass_.ident_==nullptr)
                 std::cout<<"Ident is null"<<std::endl;
+            
             std::string indentifier = current->stmt_->u.sass_.ident_;
             if(!variables.count(indentifier))
                 variables.insert(indentifier);
@@ -79,6 +51,14 @@ void Data::pushed(){
 
 void Data::popped(){stack_size--;}
 
+void Data::add_error(size_t line, const std::string &msg){
+    m_errors.push_back(new Error{line,msg});
+}
+
+Data::~Data(){
+       for(size_t i=0;i<m_errors.size();i++)
+            delete m_errors[i];
+}
 
 void rec_post_order(Exp node,Data &data,std::vector<std::string> &lines){
     class StackEntry{
@@ -100,16 +80,14 @@ void rec_post_order(Exp node,Data &data,std::vector<std::string> &lines){
             Exp right_child = current_entry.m_node->u.expadd_.exp_2;
             if(!current_entry.are_children_processed){
                 current_entry.are_children_processed=true;
-                // in case of addition 
                 stack.push_back(left_child);
                 stack.push_back(right_child);
-                break;
             }else{
                 lines.push_back("iadd");
                 data.popped();
                 stack.pop_back();
-                break;
             }
+            break;
         }
         case Exp_::is_ExpDiv:{
             Exp left_child = current_entry.m_node->u.expdiv_.exp_1;
@@ -118,13 +96,12 @@ void rec_post_order(Exp node,Data &data,std::vector<std::string> &lines){
                 current_entry.are_children_processed=true;
                 stack.push_back(right_child);
                 stack.push_back(left_child);
-                break;
             }else{
                 lines.push_back("idiv");
                 data.popped();
                 stack.pop_back();
-                break;
             }
+            break;
         }
         case Exp_::is_ExpMul:{
             Exp left_child = current_entry.m_node->u.expmul_.exp_1;
@@ -133,13 +110,12 @@ void rec_post_order(Exp node,Data &data,std::vector<std::string> &lines){
                 current_entry.are_children_processed=true;
                 stack.push_back(right_child);
                 stack.push_back(left_child);
-                break;
             }else{
                 lines.push_back("imul");
                 data.popped();
                 stack.pop_back();
-                break;
             }
+            break;
         }
         case Exp_::is_ExpSub:{
             Exp left_child = current_entry.m_node->u.expsub_.exp_1;
@@ -148,13 +124,12 @@ void rec_post_order(Exp node,Data &data,std::vector<std::string> &lines){
                 current_entry.are_children_processed=true;
                 stack.push_back(right_child);
                 stack.push_back(left_child);
-                break;
             }else{
                 lines.push_back("isub");
                 data.popped();
                 stack.pop_back();
-                break;
             }
+            break;
         }
         case Exp_::is_ExpLit:
         {
@@ -165,14 +140,18 @@ void rec_post_order(Exp node,Data &data,std::vector<std::string> &lines){
             break;
         }
         case Exp_::is_ExpVar:{
-            std::string code = generate_load_command(data.var_to_slots.at(current_entry.m_node->u.expvar_.ident_));
-            lines.push_back(code);
-            data.pushed();
+            if(data.m_assigned_vars.count(current_entry.m_node->u.expvar_.ident_)>0){
+                std::string code = generate_load_command(data.var_to_slots.at(current_entry.m_node->u.expvar_.ident_));
+                lines.push_back(code);
+                data.pushed();
+            }else
+                data.add_error((size_t)current_entry.m_node->line_number,std::format("Unitialized variable : {} ",current_entry.m_node->u.expvar_.ident_));
+            
             stack.pop_back();
             break;
         }
         default:
-            std::cout<<"Error"<<std::endl;
+            std::cout<<"Internal Compiler Error"<<std::endl;
             break;
         }
     }
@@ -196,18 +175,21 @@ std::string generate_code_jasmin(Program parse_tree,Data &data){
     std::set<std::string> def_variables;
     std::set<std::string> undef_variables;
 
-    // getstatic java/lang/System/out Ljava/io/PrintStream;
     for(;current;current=current->liststmt_){
         switch (current->stmt_->kind)
         {
         case Stmt_::is_SAss:{
             rec_post_order(current->stmt_->u.sexp_.exp_,data,lines);
+
             std::string code = generate_store_command(data.var_to_slots.at(std::string(current->stmt_->u.sass_.ident_)));
             lines.push_back(code);
+
+            data.m_assigned_vars.insert(current->stmt_->u.sass_.ident_); 
+
             break;
         }
         case Stmt_::is_SExp:{
-            data.pushed(); //we invoke the virtual method so we need one extra place on the stack for this keyword
+            data.pushed();
             lines.push_back("getstatic java/lang/System/out Ljava/io/PrintStream;");
             rec_post_order(current->stmt_->u.sexp_.exp_,data,lines);
             lines.push_back("invokevirtual java/io/PrintStream/println(I)V");
@@ -225,7 +207,7 @@ std::string generate_code_jasmin(Program parse_tree,Data &data){
 
 std::map<std::string,int> create_map(const std::set<std::string> &variables){
     std::map<std::string,int> map;
-    int index = 1; //first of all is this
+    int index = 1;
 
     for(auto &var : variables)
         map[var]=index++;

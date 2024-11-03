@@ -19,9 +19,7 @@ int main(int argc, char ** argv)
   FILE *input;
   Program parse_tree;
   int quiet = 1;
-
-
-
+  
   if(argc!=2){
     std::cout<<"Wrong number of arguments "<<std::endl;
     return 1; 
@@ -35,7 +33,8 @@ int main(int argc, char ** argv)
     usage();
     exit(1);
   }
-  
+
+  path_to_file = path_to_file.substr(0,path_to_file.length()-4); // we remove a file extension
   parse_tree = pProgram(input);
   fclose(input);
 
@@ -89,13 +88,27 @@ attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protect
   entire_llvm+="\n"+llvm_code;
   entire_llvm+=end_llvm;
 
-
   std::ofstream myfile_llvm;
-  std::string path_to_baz_file = path_to_file.substr(0,path_to_file.length()-3)+".j";
+  std::string path_to_baz_file = path_to_file+".ll";
   myfile_llvm.open(path_to_baz_file);
   myfile_llvm << entire_llvm;
   myfile_llvm.close();
   
+  // processing runtime.ll
+  std::string run_llvm_runtime = "llvm-as ./lib/runtime.ll -o runtime.bc";
+  // std::string path_to_runtime = "./lib/runtime.ll";
+
+
+  std::string file_name = std::filesystem::path(path_to_file).filename();
+  std::string path_to_result_file = path_to_file+".bc"; 
+  std::string run_llvm = "llvm-as "+path_to_baz_file+" -o "+path_to_result_file;
+
+  std::cout<<run_llvm<<std::endl;
+  system(run_llvm.data());
+  std::string run_llvm_result = "lli "+path_to_result_file;
+  std::cout<<run_llvm_result<<std::endl;
+  system(run_llvm_result.data());
+
   if (parse_tree)
   {
     if (!quiet) {

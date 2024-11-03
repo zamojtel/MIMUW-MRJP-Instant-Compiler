@@ -57,13 +57,13 @@ def Test_JVM(input_files : List[str],input_dir : str,output_dir : str,excpected_
 def Test_LLVM(input_files : List[str],input_dir : str,output_dir : str,expected_output_dir : str):
     cwd = os.getcwd()
     executable = cwd + '/build/insc_llvm'
-    generated_llvm = cwd + '/GeneratedFiles/generated_llvm.ll'
     for input_file_name in input_file_names:
+        generated_llvm = f'/{input_dir}/{input_file_name}.ll'
         test = input_dir+'/'+input_file_name+'.ins'
         # print(test)
         # print()
-        generate_files_cmd = executable + ' < ' +test
-        processed_llvm_file = f'{cwd}/GeneratedFiles/generated_llvm.bc'
+        generate_files_cmd = executable + ' ' +test
+        processed_llvm_file = f'{input_dir}/{input_file_name}.bc'
         # print(generate_files_cmd)
         os.system(generate_files_cmd)
 
@@ -97,9 +97,7 @@ if __name__ == '__main__':
     print("Printing results for jvm")
     print()
     Test_JVM(input_file_names,input_dir,output_dir,expected_output_dir)
-    # print("Printing results for llvm")
-    # print()
-    # Test_LLVM(input_file_names,input_dir,output_dir,expected_output_dir)
+    print("Printing results for llvm")
+    print()
+    Test_LLVM(input_file_names,input_dir,output_dir,expected_output_dir)
     
-
-
