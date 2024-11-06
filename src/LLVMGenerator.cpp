@@ -1,29 +1,4 @@
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <iostream>
-
-// #include "Parser.h"
-// #include "Printer.h"
-// #include "Absyn.h"
-// #include <string>
-// #include <set>
-// #include <vector>
-// #include <list>
-// #include <map>
-// #include <format>
 #include "Includes.h"
-
-// class DataLLVM{
-// private:
-// public:
-//     std::map<Exp,int> m_nodes_to_id;
-//     std::map<std::string,int> m_var_to_slots; 
-//     size_t stack_size=0;
-//     size_t max_stack_size=0;
-//     int m_node_current_index=1;
-//     std::vector<std::string> m_lines;
-//     void increase(){ m_node_current_index++;}
-// };
 
 std::string get_child_index(Exp node,DataLLVM &data){
     if(data.m_nodes_to_id.count(node)==1)
@@ -60,7 +35,7 @@ void rec_post_order_llvm(Exp node,DataLLVM &data){
 
                     std::string op_1 = get_child_index(left_child,data);
                     std::string op_2 = get_child_index(right_child,data);
-                    code = std::format("%{} = add nsw i32 {}, {}",data.m_node_current_index,op_1,op_2);
+                    code = fmt::format("%{} = add nsw i32 {}, {}",data.m_node_current_index,op_1,op_2);
                     data.m_nodes_to_id[current_entry.m_node]=data.m_node_current_index;
                     data.m_lines.push_back(code);
                     data.increase();

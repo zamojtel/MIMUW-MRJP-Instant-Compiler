@@ -1,14 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-
-#include "Parser.h"
-#include "Printer.h"
-#include "Absyn.h"
-#include "myShow.cpp"
-#include <string>
-#include <set>
-#include <vector>
+#include "Includes.h"
 
 std::string rec_post_order(Exp node){
     std::string left;
@@ -36,7 +26,7 @@ std::string rec_post_order(Exp node){
         case Exp_::is_ExpVar:
             return node->u.expvar_.ident_;
         default:
-            std::cout<<"Blad"<<std::endl;
+            std::cout<<"Error"<<std::endl;
             break;
     }
     return "";
@@ -75,7 +65,7 @@ void check_undefined_variables(Exp node,const std::set<std::string> &d_v,std::se
             break;
         }
         default:
-            std::cout<<"Blad"<<std::endl;
+            std::cout<<"Error"<<std::endl;
             break;
     }
 }
@@ -92,7 +82,7 @@ std::string generate_code(Program parse_tree){
     std::set<std::string> def_variables;
     std::set<std::string> undef_variables;
     for(;current;current=current->liststmt_){
-        //is_SAss, is_SExp 
+
         switch (current->stmt_->kind)
         {
         case Stmt_::is_SAss:{

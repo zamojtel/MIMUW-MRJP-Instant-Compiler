@@ -42,7 +42,7 @@ int main(int argc, char ** argv)
     }
   }
   else input = stdin;
-  
+
   parse_tree = pProgram(input);
   std::set<std::string> variables = collect_variables(parse_tree);
   size_t locals = variables.size();

@@ -94,9 +94,7 @@ attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protect
   myfile_llvm << entire_llvm;
   myfile_llvm.close();
   
-  // processing runtime.ll
   std::string run_llvm_runtime = "llvm-as ./lib/runtime.ll -o runtime.bc";
-  // std::string path_to_runtime = "./lib/runtime.ll";
 
 
   std::string file_name = std::filesystem::path(path_to_file).filename();
