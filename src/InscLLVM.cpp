@@ -83,11 +83,9 @@ define void @printInt(i32 %x) {
   std::string path_to_result_file = path_to_file+".bc"; 
   std::string run_llvm = "llvm-as "+path_to_baz_file+" -o "+path_to_result_file;
 
-  // std::cout<<run_llvm<<std::endl;
   system(run_llvm.data());
-  std::string run_llvm_result = "lli "+path_to_result_file;
-  // std::cout<<run_llvm_result<<std::endl;
-  system(run_llvm_result.data());
+  // std::string run_llvm_result = "lli "+path_to_result_file;
+  // system(run_llvm_result.data());
 
   if (parse_tree)
   {

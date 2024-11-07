@@ -145,7 +145,6 @@ void generate_code_llvm(Program parse_tree,DataLLVM &data){
             rec_post_order_llvm(current->stmt_->u.sexp_.exp_,data);
             std::string right_value = get_child_index(current->stmt_->u.sexp_.exp_,data);
             std::string line = fmt::format("store i32 {}, i32* %{}, align 4",right_value,data.m_var_to_slots.at(current->stmt_->u.sass_.ident_));
-            // std::string line = fmt::format("store i32 {}, ptr %{}, align 4",right_value,data.m_var_to_slots.at(current->stmt_->u.sass_.ident_));
             data.m_lines.push_back(line);
             break;   
         }
@@ -153,8 +152,6 @@ void generate_code_llvm(Program parse_tree,DataLLVM &data){
             rec_post_order_llvm(current->stmt_->u.sexp_.exp_,data);
             std::string variable = get_child_index(current->stmt_->u.sexp_.exp_,data);
             std::string line = fmt::format("call void @printInt(i32 {})",variable);
-            // std::string line = fmt::format("%{}= call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef {})",data.m_node_current_index,variable);
-            // data.increase();
             data.m_lines.push_back(line);
             break;
         }

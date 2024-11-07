@@ -1,7 +1,7 @@
 
 CC = g++ -g -O0
 
-CCFLAGS = --ansi ${INC} -std=c++20 -W -Wall -Wno-unused-function -Wno-unneeded-internal-declaration ${DEP} ${CC_OPTS}
+CCFLAGS = --ansi ${INC} -std=c++20 -W ${DEP} ${CC_OPTS}
 
 FLEX = flex
 FLEX_OPTS = -Pinstant_
@@ -27,7 +27,8 @@ clean :
 cleanTests :
 	rm -f Tests/NewTestInputs/*.j Tests/NewTestInputs/*.ll Tests/NewTestInputs/*.bc \
 	rm ./*.class \
-	rm -rf ./Tests/NewTestOutputs
+	rm -rf ./Tests/NewTestOutputs \
+	rm ./Tests/NewTestInputs/*.class
 
 distclean : clean
 	rm -f Absyn.h Absyn.c Bison.h Buffer.h Buffer.c Instant.l Lexer.c Instant.y Parser.h Parser.c Printer.c Printer.h Skeleton.c Skeleton.h Test.c Makefile Instant.tex

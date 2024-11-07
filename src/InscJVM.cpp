@@ -80,8 +80,14 @@ int main(int argc, char ** argv)
     myfile.open(path_to_baz_file);
     myfile << jasmin_code;
     myfile.close();
-
-    std::string run_java = "java -jar lib/jasmin.jar "+path_to_baz_file;
+    std::string directory; 
+    size_t found = path_to_file.find_last_of("/");
+    if (found == std::string::npos)
+      directory = ". ";
+    else
+      directory = path_to_file.substr(0, found) + " ";
+  
+    std::string run_java = fmt::format("java -jar lib/jasmin.jar -d {} {}",directory,path_to_baz_file);
 
     system(run_java.data());
   }
