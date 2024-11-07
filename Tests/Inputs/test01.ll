@@ -10,23 +10,12 @@ module asm ".globl _ZSt21ios_base_library_initv"
 
 ; Function Attrs: mustprogress noinline norecurse optnone uwtable
 define dso_local noundef i32 @main() #0 {
-%1 = alloca i32, align 4
-store i32 1, i32* %1, align 4
-%2 = load i32, i32* %1, align 4
-%3 = load i32, i32* %1, align 4
-%4 = add nsw i32 %2, %3
-store i32 %4, i32* %1, align 4
-%5 = load i32, i32* %1, align 4
-%6 = load i32, i32* %1, align 4
-%7 = add nsw i32 %5, %6
-store i32 %7, i32* %1, align 4
-%8 = load i32, i32* %1, align 4
-%9= call i32 (i32*, ...) @printf(i8* noundef @.str, i32 noundef %8)
+%1= call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef 42)
 
     ret i32 0
 }
 
-declare i32 @printf(i8* noundef, ...) #1
+declare i32 @printf(ptr noundef, ...) #1
 
 attributes #0 = { mustprogress noinline norecurse optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
