@@ -28,7 +28,7 @@ int main(int argc, char ** argv)
   std::string path_to_file = argv[1];
   input = fopen(path_to_file.data(), "r");
   if (!input) {
-    std::cout<<"Cant open the file"<<std::endl;
+    std::cout<<"Can't open the file"<<std::endl;
     std::perror("error");
     usage();
     exit(1);
@@ -57,6 +57,8 @@ module asm ".globl _ZSt21ios_base_library_initv"
 
 @.str = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 
+@dnl = internal constant [4 x i8] c"%d\0A\00"
+
 ; Function Attrs: mustprogress noinline norecurse optnone uwtable
 define dso_local noundef i32 @main() #0 {{)abc";
   
@@ -64,7 +66,12 @@ define dso_local noundef i32 @main() #0 {{)abc";
     ret i32 0
 }
 
-declare i32 @printf(ptr noundef, ...) #1
+declare i32 @printf(i8* noundef, ...) #1
+define void @printInt(i32 %x) {
+       %t0 = getelementptr [4 x i8], [4 x i8]* @dnl, i32 0, i32 0
+       call i32 (i8*, ...) @printf(i8* %t0, i32 %x) 
+       ret void
+}
 
 attributes #0 = { mustprogress noinline norecurse optnone uwtable "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -94,15 +101,14 @@ attributes #1 = { "frame-pointer"="all" "no-trapping-math"="true" "stack-protect
   myfile_llvm << entire_llvm;
   myfile_llvm.close();
   
-  std::string run_llvm_runtime = "llvm-as ./lib/runtime.ll -o runtime.bc";
-
-
   std::string file_name = std::filesystem::path(path_to_file).filename();
   std::string path_to_result_file = path_to_file+".bc"; 
   std::string run_llvm = "llvm-as "+path_to_baz_file+" -o "+path_to_result_file;
 
   std::cout<<run_llvm<<std::endl;
   system(run_llvm.data());
+  /* Link it */
+  // std::string llvlinkCallString = fmt::format("llvm-link -o {} ./lib/runtime.bc",path_to_result_file,cwd);
   std::string run_llvm_result = "lli "+path_to_result_file;
   std::cout<<run_llvm_result<<std::endl;
   system(run_llvm_result.data());

@@ -63,7 +63,7 @@ int main(int argc, char ** argv)
   
 .method public static main([Ljava/lang/String;)V
 .limit stack )abc";
-
+  
   start = dyna_print(start,file_name);
   start+= std::to_string(data.max_stack_size)+"\n";
   start+=".limit locals "+std::to_string(locals+1)+"\n";

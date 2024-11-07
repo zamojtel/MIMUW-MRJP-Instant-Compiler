@@ -151,7 +151,9 @@ void generate_code_llvm(Program parse_tree,DataLLVM &data){
         case Stmt_::is_SExp:{
             rec_post_order_llvm(current->stmt_->u.sexp_.exp_,data);
             std::string variable = get_child_index(current->stmt_->u.sexp_.exp_,data);
-            std::string line = fmt::format("%{}= call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef {})",data.m_node_current_index,variable);
+            // call void @printInt(i32 %15)
+            std::string line = fmt::format("call void @printInt(i32 {})",variable);
+            // std::string line = fmt::format("%{}= call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef {})",data.m_node_current_index,variable);
             data.increase();
             data.m_lines.push_back(line);
             break;
