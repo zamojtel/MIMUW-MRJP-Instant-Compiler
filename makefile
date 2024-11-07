@@ -31,7 +31,7 @@ cleanTests :
 	rm ./Tests/NewTestInputs/*.class
 
 distclean : clean
-	rm -f Absyn.h Absyn.c Bison.h Buffer.h Buffer.c Instant.l Lexer.c Instant.y Parser.h Parser.c Printer.c Printer.h Skeleton.c Skeleton.h Test.c Makefile Instant.tex
+	rm -f Absyn.h Absyn.c Bison.h Buffer.h Buffer.c Instant.l Lexer.c Instant.y Parser.h Parser.c Printer.c Printer.h Skeleton.c Skeleton.h Makefile Instant.tex
 
 InscJVM: ${OBJS} InscJVM.o
 	@echo "Linking TestInstant..."
@@ -40,9 +40,6 @@ InscJVM: ${OBJS} InscJVM.o
 InscLLVM: ${OBJS} InscLLVM.o
 	${CC} ${CCFLAGS} ${OBJS_FILES} build/InscLLVM.o -o insc_llvm
 
-TestInstant : ${OBJS} Test.o
-	@echo "Linking TestInstant..."
-	${CC} ${CCFLAGS} ${OBJS_FILES} build/Test.o -o build/TestInstant
 
 Absyn.o : src/Absyn.c src/Absyn.h
 	${CC} ${CCFLAGS} -c src/Absyn.c -o build/Absyn.o
@@ -72,9 +69,6 @@ LLVMGenerator.o : src/LLVMGenerator.cpp src/LLVMGenerator.h
 
 JasminGenerator.o : src/JasminGenerator.cpp src/JasminGenerator.h
 	${CC} ${CCFLAGS} -c src/JasminGenerator.cpp -o build/JasminGenerator.o
-
-Test.o : src/Test.cpp src/Parser.h src/Printer.h src/Absyn.h
-	${CC} ${CCFLAGS} -c src/Test.cpp -o build/Test.o
 
 InscLLVM.o : src/InscLLVM.cpp src/Parser.h src/Printer.h src/Absyn.h
 	${CC} ${CCFLAGS} -c src/InscLLVM.cpp -o build/InscLLVM.o
