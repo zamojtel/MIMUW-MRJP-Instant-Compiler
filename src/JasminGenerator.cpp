@@ -145,7 +145,7 @@ void rec_post_order(Exp node,Data &data,std::vector<std::string> &lines){
                 lines.push_back(code);
                 data.pushed();
             }else
-                data.add_error((size_t)current_entry.m_node->line_number,std::format("Unitialized variable : {} ",current_entry.m_node->u.expvar_.ident_));
+                data.add_error((size_t)current_entry.m_node->line_number,fmt::format("Unitialized variable : {} ",current_entry.m_node->u.expvar_.ident_));
             stack.pop_back();
             break;
         }

@@ -55,7 +55,7 @@ void rec_post_order_llvm(Exp node,DataLLVM &data){
 
                     std::string op_1 = get_child_index(left_child,data);
                     std::string op_2 = get_child_index(right_child,data);
-                    code = std::format("%{} = sdiv i32 {}, {}",data.m_node_current_index,op_1,op_2);
+                    code = fmt::format("%{} = sdiv i32 {}, {}",data.m_node_current_index,op_1,op_2);
                     data.m_nodes_to_id[current_entry.m_node]=data.m_node_current_index;
                     data.m_lines.push_back(code);
                     data.increase();   
@@ -75,7 +75,7 @@ void rec_post_order_llvm(Exp node,DataLLVM &data){
 
                     std::string op_1 = get_child_index(left_child,data);
                     std::string op_2 = get_child_index(right_child,data);
-                    code = std::format("%{} = mul nsw i32 {}, {}",data.m_node_current_index,op_1,op_2);
+                    code = fmt::format("%{} = mul nsw i32 {}, {}",data.m_node_current_index,op_1,op_2);
                     data.m_nodes_to_id[current_entry.m_node]=data.m_node_current_index;
                     data.m_lines.push_back(code);
                     data.increase();   
@@ -95,7 +95,7 @@ void rec_post_order_llvm(Exp node,DataLLVM &data){
 
                     std::string op_1 = get_child_index(left_child,data);
                     std::string op_2 = get_child_index(right_child,data);
-                    code = std::format("%{} = sub nsw i32 {}, {}",data.m_node_current_index,op_1,op_2);
+                    code = fmt::format("%{} = sub nsw i32 {}, {}",data.m_node_current_index,op_1,op_2);
                     data.m_nodes_to_id[current_entry.m_node]=data.m_node_current_index;
                     data.m_lines.push_back(code);
                     data.increase();   
@@ -108,7 +108,7 @@ void rec_post_order_llvm(Exp node,DataLLVM &data){
                 break;
             }
             case Exp_::is_ExpVar:{
-                code = std::format("%{} = load i32, ptr %{}, align 4",data.m_node_current_index,data.m_var_to_slots.at(current_entry.m_node->u.expvar_.ident_));
+                code = fmt::format("%{} = load i32, ptr %{}, align 4",data.m_node_current_index,data.m_var_to_slots.at(current_entry.m_node->u.expvar_.ident_));
                 data.m_nodes_to_id[current_entry.m_node]=data.m_node_current_index;
                 data.m_lines.push_back(code);
                 data.increase();
@@ -133,7 +133,7 @@ void generate_code_llvm(Program parse_tree,DataLLVM &data){
     std::set<std::string> undef_variables;
     
     for(size_t i=0;i<data.m_var_to_slots.size();i++){
-        std::string code = std::format("%{} = alloca i32, align 4",data.m_node_current_index);
+        std::string code = fmt::format("%{} = alloca i32, align 4",data.m_node_current_index);
         data.increase();
         data.m_lines.push_back(code);
     }
@@ -144,14 +144,14 @@ void generate_code_llvm(Program parse_tree,DataLLVM &data){
         case Stmt_::is_SAss:{
             rec_post_order_llvm(current->stmt_->u.sexp_.exp_,data);
             std::string right_value = get_child_index(current->stmt_->u.sexp_.exp_,data);
-            std::string line = std::format("store i32 {}, ptr %{}, align 4",right_value,data.m_var_to_slots.at(current->stmt_->u.sass_.ident_));
+            std::string line = fmt::format("store i32 {}, ptr %{}, align 4",right_value,data.m_var_to_slots.at(current->stmt_->u.sass_.ident_));
             data.m_lines.push_back(line);
             break;   
         }
         case Stmt_::is_SExp:{
             rec_post_order_llvm(current->stmt_->u.sexp_.exp_,data);
             std::string variable = get_child_index(current->stmt_->u.sexp_.exp_,data);
-            std::string line = std::format("%{}= call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef {})",data.m_node_current_index,variable);
+            std::string line = fmt::format("%{}= call i32 (ptr, ...) @printf(ptr noundef @.str, i32 noundef {})",data.m_node_current_index,variable);
             data.increase();
             data.m_lines.push_back(line);
             break;
