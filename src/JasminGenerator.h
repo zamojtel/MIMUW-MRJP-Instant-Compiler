@@ -12,9 +12,7 @@ public:
     void popped();
     void add_error(size_t line,const std::string &msg);
     size_t get_error_count() const { return m_errors.size();};
-
     ~Data();
-    
 };
 
 std::set<std::string> collect_variables(Program parse_tree);

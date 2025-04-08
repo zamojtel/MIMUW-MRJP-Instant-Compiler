@@ -45,22 +45,29 @@ std::string generate_load_command(int value){
         return std::string("iload ")+std::to_string(value);
 }
 
-void Data::pushed(){
-    stack_size++;
-    if(stack_size>max_stack_size)
-        max_stack_size=stack_size;
-}
+// OK
+// void Data::pushed(){
+//     stack_size++;
+//     if(stack_size>max_stack_size)
+//         max_stack_size=stack_size;
+// }
+// OK
 
-void Data::popped(){stack_size--;}
+// OK 
+// void Data::popped(){stack_size--;}
+// OK
 
-void Data::add_error(size_t line, const std::string &msg){
-    m_errors.push_back(new Error{line,msg});
-}
+// OK
+// void Data::add_error(size_t line, const std::string &msg){
+//     m_errors.push_back(new Error{line,msg});
+// }
+// OK
 
-Data::~Data(){
-       for(size_t i=0;i<m_errors.size();i++)
-            delete m_errors[i];
-}
+
+// Data::~Data(){
+//     for(size_t i=0;i<m_errors.size();i++)
+//         delete m_errors[i];
+// }
 
 int calculate_subtree_size(Exp node){
     if(node==nullptr)
@@ -99,33 +106,34 @@ void rec_post_order(Exp node,Data &data,std::vector<std::string> &lines){
     public:
         Exp m_node=nullptr;
         bool m_is_swap=false;
-        // Empty entry means we swap top 2 values of the stack 
         StackEntry(Exp node):m_node{node},m_is_swap{false}{}
         bool are_children_processed=false;
     };
     
-    std::list<StackEntry> stack;
-    stack.push_back(node);
+    std::list<StackEntry> container;
+    container.push_front(node);
    
-    while(!stack.empty()){
-        StackEntry &current_entry = stack.back();
+    while(!container.empty()){
+        StackEntry &current_entry = container.front();
+        container.pop_front();
         switch(current_entry.m_node->kind){
             case Exp_::is_ExpAdd:{
+                // OK
                 Exp left_child = current_entry.m_node->u.expadd_.exp_1;
                 Exp right_child = current_entry.m_node->u.expadd_.exp_2;
                 if(!current_entry.are_children_processed){
                     current_entry.are_children_processed=true;
+                    container.push_front(current_entry);
                     if(m_subtree_size.at(left_child)>=m_subtree_size.at(right_child)){
-                        stack.push_back(left_child);
-                        stack.push_back(right_child);
+                        container.push_front(right_child);
+                        container.push_front(left_child);
                     }else{
-                        stack.push_back(right_child);
-                        stack.push_back(left_child);
+                        container.push_front(left_child);
+                        container.push_front(right_child);
                     }
                 }else{
                     lines.push_back("iadd");
                     data.popped();
-                    stack.pop_back();
                 }
                 break;
             }
@@ -134,22 +142,21 @@ void rec_post_order(Exp node,Data &data,std::vector<std::string> &lines){
                 Exp right_child = current_entry.m_node->u.expdiv_.exp_2;
                 if(!current_entry.are_children_processed){
                     current_entry.are_children_processed=true;
+                    container.push_front(current_entry);
                     if(m_subtree_size.at(left_child)>=m_subtree_size.at(right_child)){
-                        stack.push_back(left_child);
-                        stack.push_back(right_child);
-                        current_entry.m_is_swap=true;
+                        container.push_front(right_child);
+                        container.push_front(left_child);
                     }else{
-                        stack.push_back(right_child);
-                        stack.push_back(left_child);
+                        container.push_front(left_child);
+                        container.push_front(right_child);
+                        current_entry.m_is_swap=true;
                     }
                 }else{
-
                     if(current_entry.m_is_swap)
                         lines.push_back("swap");
 
                     lines.push_back("idiv");
                     data.popped();
-                    stack.pop_back();
                 }
                 break;
             }
@@ -158,17 +165,17 @@ void rec_post_order(Exp node,Data &data,std::vector<std::string> &lines){
                 Exp right_child = current_entry.m_node->u.expmul_.exp_2;
                 if(!current_entry.are_children_processed){
                     current_entry.are_children_processed=true;
+                    container.push_front(current_entry);
                     if(m_subtree_size.at(left_child)>=m_subtree_size.at(right_child)){
-                        stack.push_back(left_child);
-                        stack.push_back(right_child);
+                        container.push_front(right_child);
+                        container.push_front(left_child);
                     }else{
-                        stack.push_back(right_child);
-                        stack.push_back(left_child);
+                        container.push_front(left_child);
+                        container.push_front(right_child);
                     }
                 }else{
                     lines.push_back("imul");
                     data.popped();
-                    stack.pop_back();
                 }
                 break;
             }
@@ -177,20 +184,20 @@ void rec_post_order(Exp node,Data &data,std::vector<std::string> &lines){
                 Exp right_child = current_entry.m_node->u.expsub_.exp_2;
                 if(!current_entry.are_children_processed){
                     current_entry.are_children_processed=true;
+                    container.push_front(current_entry);
                     if(m_subtree_size.at(left_child)>=m_subtree_size.at(right_child)){
-                        stack.push_back(left_child);
-                        stack.push_back(right_child);
-                        current_entry.m_is_swap=true;
+                        container.push_front(right_child);
+                        container.push_front(left_child);
                     }else{
-                        stack.push_back(right_child);
-                        stack.push_back(left_child);
+                        container.push_front(left_child);
+                        container.push_front(right_child);
+                        current_entry.m_is_swap=true;
                     }
                 }else{
                     if(current_entry.m_is_swap)
                         lines.push_back("swap");
                     lines.push_back("isub");
                     data.popped();
-                    stack.pop_back();
                 }
                 break;
             }
@@ -199,7 +206,6 @@ void rec_post_order(Exp node,Data &data,std::vector<std::string> &lines){
                 std::string generated_code = generate_pushed_number(current_entry.m_node->u.explit_.integer_);
                 lines.push_back(generated_code);
                 data.pushed();
-                stack.pop_back();
                 break;
             }
             case Exp_::is_ExpVar:{
@@ -209,7 +215,6 @@ void rec_post_order(Exp node,Data &data,std::vector<std::string> &lines){
                     data.pushed();
                 }else
                     data.add_error((size_t)current_entry.m_node->line_number,fmt::format("Unitialized variable : {} ",current_entry.m_node->u.expvar_.ident_));
-                stack.pop_back();
                 break;
             }
             default:
