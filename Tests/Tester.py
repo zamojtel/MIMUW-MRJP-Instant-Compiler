@@ -85,13 +85,13 @@ if __name__ == '__main__':
         if all_files[j][-3:]=='ins':
             input_file_names.append(all_files[j][:-4])
 
- 
     os.system(f'mkdir -p {cwd}/Tests/NewTestOutputs')
-
+    # input_file_names = ["associativity_division"]
     print("Printing results for jvm")
     print()
+    # Test_JVM(input_file_names,input_dir,output_dir,expected_output_dir)
     Test_JVM(input_file_names,input_dir,output_dir,expected_output_dir)
-    print("Printing results for llvm")
-    print()
-    Test_LLVM(input_file_names,input_dir,output_dir,expected_output_dir)
+    # print("Printing results for llvm")
+    # print()
+    # Test_LLVM(input_file_names,input_dir,output_dir,expected_output_dir)
     

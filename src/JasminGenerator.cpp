@@ -1,5 +1,7 @@
 #include "Includes.h"
 
+std::map<Exp,int> m_subtree_size;
+
 std::set<std::string> collect_variables(Program parse_tree){
     std::set<std::string> variables;
     ListStmt current = parse_tree->u.prog_.liststmt_;
@@ -60,98 +62,159 @@ Data::~Data(){
             delete m_errors[i];
 }
 
+int calculate_subtree_size(Exp node){
+    if(node==nullptr)
+        return 0;
+
+    int value=0;
+    switch (node->kind)
+    {
+    case Exp_::is_ExpAdd:
+        value = calculate_subtree_size(node->u.expadd_.exp_1)+calculate_subtree_size(node->u.expadd_.exp_2);
+        break;
+    case Exp_::is_ExpSub:
+        value = calculate_subtree_size(node->u.expsub_.exp_1)+calculate_subtree_size(node->u.expsub_.exp_2);
+        break;
+    case Exp_::is_ExpDiv:
+        value = calculate_subtree_size(node->u.expdiv_.exp_1)+calculate_subtree_size(node->u.expdiv_.exp_2);
+        break;
+    case Exp_::is_ExpMul:
+        value = calculate_subtree_size(node->u.expmul_.exp_1)+calculate_subtree_size(node->u.expmul_.exp_2);
+        break;
+    case Exp_::is_ExpLit:
+    case Exp_::is_ExpVar:
+        value = 0;
+        break;
+    default:
+        break;
+    }
+    // plus 1 with root
+    m_subtree_size[node] = value+1;
+
+    return value+1;
+}
+
 void rec_post_order(Exp node,Data &data,std::vector<std::string> &lines){
     class StackEntry{
     public:
-        Exp m_node;
-        StackEntry(Exp node):m_node{node}{}
+        Exp m_node=nullptr;
+        bool m_is_swap=false;
+        // Empty entry means we swap top 2 values of the stack 
+        StackEntry(Exp node):m_node{node},m_is_swap{false}{}
         bool are_children_processed=false;
     };
     
     std::list<StackEntry> stack;
     stack.push_back(node);
-
+   
     while(!stack.empty()){
         StackEntry &current_entry = stack.back();
-
         switch(current_entry.m_node->kind){
-        case Exp_::is_ExpAdd:{
-            Exp left_child = current_entry.m_node->u.expadd_.exp_1;
-            Exp right_child = current_entry.m_node->u.expadd_.exp_2;
-            if(!current_entry.are_children_processed){
-                current_entry.are_children_processed=true;
-                stack.push_back(left_child);
-                stack.push_back(right_child);
-            }else{
-                lines.push_back("iadd");
-                data.popped();
-                stack.pop_back();
+            case Exp_::is_ExpAdd:{
+                Exp left_child = current_entry.m_node->u.expadd_.exp_1;
+                Exp right_child = current_entry.m_node->u.expadd_.exp_2;
+                if(!current_entry.are_children_processed){
+                    current_entry.are_children_processed=true;
+                    if(m_subtree_size.at(left_child)>=m_subtree_size.at(right_child)){
+                        stack.push_back(left_child);
+                        stack.push_back(right_child);
+                    }else{
+                        stack.push_back(right_child);
+                        stack.push_back(left_child);
+                    }
+                }else{
+                    lines.push_back("iadd");
+                    data.popped();
+                    stack.pop_back();
+                }
+                break;
             }
-            break;
-        }
-        case Exp_::is_ExpDiv:{
-            Exp left_child = current_entry.m_node->u.expdiv_.exp_1;
-            Exp right_child = current_entry.m_node->u.expdiv_.exp_2;
-            if(!current_entry.are_children_processed){
-                current_entry.are_children_processed=true;
-                stack.push_back(right_child);
-                stack.push_back(left_child);
-            }else{
-                lines.push_back("idiv");
-                data.popped();
-                stack.pop_back();
+            case Exp_::is_ExpDiv:{
+                Exp left_child = current_entry.m_node->u.expdiv_.exp_1;
+                Exp right_child = current_entry.m_node->u.expdiv_.exp_2;
+                if(!current_entry.are_children_processed){
+                    current_entry.are_children_processed=true;
+                    if(m_subtree_size.at(left_child)>=m_subtree_size.at(right_child)){
+                        stack.push_back(left_child);
+                        stack.push_back(right_child);
+                        current_entry.m_is_swap=true;
+                    }else{
+                        stack.push_back(right_child);
+                        stack.push_back(left_child);
+                    }
+                }else{
+
+                    if(current_entry.m_is_swap)
+                        lines.push_back("swap");
+
+                    lines.push_back("idiv");
+                    data.popped();
+                    stack.pop_back();
+                }
+                break;
             }
-            break;
-        }
-        case Exp_::is_ExpMul:{
-            Exp left_child = current_entry.m_node->u.expmul_.exp_1;
-            Exp right_child = current_entry.m_node->u.expmul_.exp_2;
-            if(!current_entry.are_children_processed){
-                current_entry.are_children_processed=true;
-                stack.push_back(right_child);
-                stack.push_back(left_child);
-            }else{
-                lines.push_back("imul");
-                data.popped();
-                stack.pop_back();
+            case Exp_::is_ExpMul:{
+                Exp left_child = current_entry.m_node->u.expmul_.exp_1;
+                Exp right_child = current_entry.m_node->u.expmul_.exp_2;
+                if(!current_entry.are_children_processed){
+                    current_entry.are_children_processed=true;
+                    if(m_subtree_size.at(left_child)>=m_subtree_size.at(right_child)){
+                        stack.push_back(left_child);
+                        stack.push_back(right_child);
+                    }else{
+                        stack.push_back(right_child);
+                        stack.push_back(left_child);
+                    }
+                }else{
+                    lines.push_back("imul");
+                    data.popped();
+                    stack.pop_back();
+                }
+                break;
             }
-            break;
-        }
-        case Exp_::is_ExpSub:{
-            Exp left_child = current_entry.m_node->u.expsub_.exp_1;
-            Exp right_child = current_entry.m_node->u.expsub_.exp_2;
-            if(!current_entry.are_children_processed){
-                current_entry.are_children_processed=true;
-                stack.push_back(right_child);
-                stack.push_back(left_child);
-            }else{
-                lines.push_back("isub");
-                data.popped();
-                stack.pop_back();
+            case Exp_::is_ExpSub:{
+                Exp left_child = current_entry.m_node->u.expsub_.exp_1;
+                Exp right_child = current_entry.m_node->u.expsub_.exp_2;
+                if(!current_entry.are_children_processed){
+                    current_entry.are_children_processed=true;
+                    if(m_subtree_size.at(left_child)>=m_subtree_size.at(right_child)){
+                        stack.push_back(left_child);
+                        stack.push_back(right_child);
+                        current_entry.m_is_swap=true;
+                    }else{
+                        stack.push_back(right_child);
+                        stack.push_back(left_child);
+                    }
+                }else{
+                    if(current_entry.m_is_swap)
+                        lines.push_back("swap");
+                    lines.push_back("isub");
+                    data.popped();
+                    stack.pop_back();
+                }
+                break;
             }
-            break;
-        }
-        case Exp_::is_ExpLit:
-        {
-            std::string generated_code = generate_pushed_number(current_entry.m_node->u.explit_.integer_);
-            lines.push_back(generated_code);
-            data.pushed();
-            stack.pop_back();
-            break;
-        }
-        case Exp_::is_ExpVar:{
-            if(data.m_assigned_vars.count(current_entry.m_node->u.expvar_.ident_)>0){
-                std::string code = generate_load_command(data.var_to_slots.at(current_entry.m_node->u.expvar_.ident_));
-                lines.push_back(code);
+            case Exp_::is_ExpLit:
+            {
+                std::string generated_code = generate_pushed_number(current_entry.m_node->u.explit_.integer_);
+                lines.push_back(generated_code);
                 data.pushed();
-            }else
-                data.add_error((size_t)current_entry.m_node->line_number,fmt::format("Unitialized variable : {} ",current_entry.m_node->u.expvar_.ident_));
-            stack.pop_back();
-            break;
-        }
-        default:
-            std::cout<<"Internal Compiler Error"<<std::endl;
-            break;
+                stack.pop_back();
+                break;
+            }
+            case Exp_::is_ExpVar:{
+                if(data.m_assigned_vars.count(current_entry.m_node->u.expvar_.ident_)>0){
+                    std::string code = generate_load_command(data.var_to_slots.at(current_entry.m_node->u.expvar_.ident_));
+                    lines.push_back(code);
+                    data.pushed();
+                }else
+                    data.add_error((size_t)current_entry.m_node->line_number,fmt::format("Unitialized variable : {} ",current_entry.m_node->u.expvar_.ident_));
+                stack.pop_back();
+                break;
+            }
+            default:
+                std::cout<<"Internal Compiler Error"<<std::endl;
+                break;
         }
     }
 }
@@ -178,16 +241,19 @@ std::string generate_code_jasmin(Program parse_tree,Data &data){
         switch (current->stmt_->kind)
         {
         case Stmt_::is_SAss:{
+            calculate_subtree_size(current->stmt_->u.sexp_.exp_);
+
             rec_post_order(current->stmt_->u.sexp_.exp_,data,lines);
 
             std::string code = generate_store_command(data.var_to_slots.at(std::string(current->stmt_->u.sass_.ident_)));
             lines.push_back(code);
 
             data.m_assigned_vars.insert(current->stmt_->u.sass_.ident_); 
-
+            data.popped();
             break;
         }
         case Stmt_::is_SExp:{
+            calculate_subtree_size(current->stmt_->u.sexp_.exp_);
             data.pushed();
             lines.push_back("getstatic java/lang/System/out Ljava/io/PrintStream;");
             rec_post_order(current->stmt_->u.sexp_.exp_,data,lines);
